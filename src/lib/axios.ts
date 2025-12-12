@@ -1,4 +1,5 @@
 import axios from "axios";
+import Cookies from 'js-cookie';
 
 // Axios 인스턴스 생성
 const api = axios.create({
@@ -10,33 +11,20 @@ const api = axios.create({
   withCredentials: true
 });
 
-// 요청 전처리
-// api.interceptors.request.use(
-//   (config) => {
-//     // 여기서 예를 들어, 토큰을 헤더에 추가할 수 있습니다.
-//     const token = localStorage.getItem("authToken");
-//     if (token) {
-//       config.headers.Authorization = `Bearer ${token}`;
-//     }
-//     return config;
-//   },
-//   (error) => {
-//     return Promise.reject(error);
-//   }
-// );
+/**
+ * 헤더값 자동 주입
+ */
+api.interceptors.request.use(
+  (config) => {
+    const token = Cookies.get('onlineOpenChatAuth');
 
-// // 응답 전처리
-// api.interceptors.response.use(
-//   (response) => {
-//     return response;
-//   },
-//   (error) => {
-//     // 에러 처리
-//     if (error.response) {
-//       console.error("API Error:", error.response);
-//     }
-//     return Promise.reject(error);
-//   }
-// );
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 export default api;

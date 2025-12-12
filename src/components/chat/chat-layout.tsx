@@ -15,7 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Sidebar } from "../sidebar";
 import { Chat } from "./chat";
-import { User, Message } from "@/app/data";
+import { User, Message, Friend, Room } from "@/app/data";
 import api from "@/lib/axios";
 import { redirect } from "next/navigation";
 
@@ -23,6 +23,7 @@ import * as StompJs from "@stomp/stompjs";
 // import { User, User } from "lucide-react";
 import { useUnmountEffect } from "framer-motion";
 import { Client } from "@stomp/stompjs";
+import { GetFriendListResponse } from "@/types/api/user";
 
 interface ChatLayoutProps {
   defaultLayout: number[] | undefined;
@@ -41,7 +42,18 @@ export function ChatLayout({
   defaultCollapsed = false,
   navCollapsedSize,
 }: ChatLayoutProps) {
+
+  // TODO : Connected Users가 아니라 Room으로 교체
   const [connectedUsers, setConnectedUsers] = React.useState<User[]>([]);
+
+  // 채팅방 목록
+  const [roomList, setRoomList] = React.useState<Room[]>([]);
+
+
+  // 친구 목록
+  const [friendList, setFriendList] = React.useState<Friend[]>([]);
+
+  
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
   const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
 
@@ -53,24 +65,60 @@ export function ChatLayout({
     selectedUser?.messages ?? [] // selectedUser가 null일 경우 빈 배열을 사용
   );
 
-  const useMountEffect = () => {
-    const authCookie = getCookie("onlineOpenChatAuth");
+  /**
+   * chat-layout 마운트 완료 시 최초 한번 호출
+   */
+  useEffect(() => {
+    const init = async () => {
+      try {
 
-    
-    /**
-     * 현재 유저 닉네임 세팅
-     */
-    const verifyAuthToken = async () => {
-      const result = await api.get(`/api/v1/auth/verify-token/${authCookie}`, {
-        headers: {
-          Authorization: `Bearer ${authCookie}`,
-        },
-        withCredentials: true
-      });
-      myNickname.current = result.data;
+        // TODO : 비동기 태스크로 묶어서 한방에 처리 후 정상 처리 로그 찍기
+        getMyInfo();
+        getFriendList();
+        
+      } catch (e) {
+        console.error('chat layout 마운트 에러 발생', e);
+      }
     };
 
-    verifyAuthToken();
+    init();
+
+  }, []);
+
+  /**
+   * 현재 유저 닉네임 세팅
+   */
+  const getMyInfo = async () => {
+    try {
+      const res = await api.get<GetMyInfoResponse>('/api/v1/auth/get-my-info');
+      console.log('[getMyInfo] /get-my-info 호출 결과 : ', res);
+
+      // 현재 유저 닉네임 세팅
+      myNickname.current = res.data.nickname;
+    } catch (e) {
+      console.log('Not logged in');
+    }
+
+  };
+
+  /**
+   * 현재 유저 친구목록 조회
+   */
+  const getFriendList = async () => {
+    try {
+      const res = await api.get<GetFriendListResponse>('/api/v1/user/get-friendList');
+      console.log('[getFriendList] /get-friendList 호출 결과 : ', res.data);
+
+      // 현재 유저 친구 목록 세팅
+      setFriendList(res.data.friendList);
+    } catch (e) {
+      console.log('Not logged in');
+    }
+
+  };
+
+  const useMountEffect = () => {
+    const authCookie = getCookie("onlineOpenChatAuth");
 
     if (client === null) {
       console.log('[setSocket] 채팅 서버 접속 기록이 없습니다. 웹소켓 접속을 시도합니다.');
@@ -113,6 +161,8 @@ export function ChatLayout({
    */
   const subscribe = (clientInstance: StompJs.Client) => {
     console.log("웹소켓 구독 요청...");
+
+    // TODO : /chat 뒤에 룸 ID를 붙여서 구독처리
     clientInstance.subscribe(
       `/sub/chat`,
       (received_message: StompJs.IFrame) => {
@@ -122,6 +172,8 @@ export function ChatLayout({
         if (item != null) {
           const user: User = JSON.parse(item);
 
+          // 현재 채팅방의 채팅인 경우만 UI에 표시...
+          // TODO : 현재 방의 채팅만 가져올 것이므로 나중에는 다 표시할 것임
           if (message.to == user.name || message.from == user.name) {
             setMessages((prevMessages) => [...prevMessages, message]);
           }
@@ -164,10 +216,13 @@ export function ChatLayout({
         )}
       >
         <Sidebar
-          me={myNickname}
+          me={myNickname} // 현재 유저 닉네임
           isCollapsed={isCollapsed}
           links={connectedUsers}
+          friendList={friendList} // 친구 목록
+          roomList={roomList} // 채팅방 목록
           setConnectedUsers={setConnectedUsers}
+          setRoomList={setRoomList}
           setSelectedUser={setSelectedUser}
           setMessages={setMessages}
         />

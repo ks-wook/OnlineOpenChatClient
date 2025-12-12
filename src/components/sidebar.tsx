@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { MessageSquarePlus, Search, Send, User, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -11,8 +11,8 @@ import {
   TooltipProvider,
 } from "@/components/ui/tooltip";
 import { Avatar, AvatarImage } from "./ui/avatar";
-import { User, Message } from "@/app/data";
-import React from "react";
+import { User as UserData, Message, Friend, Room } from "@/app/data";
+import React, { useEffect } from "react";
 
 import {
   Dialog,
@@ -29,30 +29,35 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import "@mui/material/styles"; // MUI 스타일 추가
 import api from "@/lib/axios";
+import CreateRoomDialog from "./dialog/CreateRoomDialog";
+import FriendsListDialog from "./dialog/FriendsListDialog";
 
 interface SidebarProps {
   me: React.RefObject<string>;
   isCollapsed: boolean;
-  links: User[];
-  setConnectedUsers: React.Dispatch<React.SetStateAction<User[]>>;
-  setSelectedUser: React.Dispatch<React.SetStateAction<User | null>>;
+  // links: UserData[];
+  friendList : Friend[];
+  roomList : Room[];
+  setRoomList: React.Dispatch<React.SetStateAction<Room[]>>;
+  setConnectedUsers: React.Dispatch<React.SetStateAction<UserData[]>>;
+  setSelectedUser: React.Dispatch<React.SetStateAction<UserData | null>>;
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
 }
 
-const searchResult = (name: string): User => {
+const searchResult = (name: string): UserData => {
   return {
     name,
     messages: [], // 기본값으로 빈 배열
   };
 };
 
-const getCookie = (name: string): string | null => {
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
-  if (match) return match[2];
-  return null;
-};
+function getCookie(name: string): string | undefined {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(";").shift();
+}
 
-export const fetchUsers = async (searchQuery: string): Promise<User[]> => {
+export const fetchUsers = async (searchQuery: string, myName: string | null): Promise<UserData[]> => {
   const token = getCookie("onlineOpenChatAuth");
 
   if (!token) {
@@ -60,7 +65,7 @@ export const fetchUsers = async (searchQuery: string): Promise<User[]> => {
   }
 
   // 유저 검색 요청
-  const response = await api.get(`/api/v1/user/search/${searchQuery}`, {
+  const response = await api.get(`/api/v1/user/search/${searchQuery}?myName=${myName}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -76,15 +81,22 @@ export const fetchUsers = async (searchQuery: string): Promise<User[]> => {
 
 export function Sidebar({
   me,
-  links,
+  // links,
+  friendList,
   isCollapsed,
+  roomList,
+  setRoomList,
   setConnectedUsers,
   setSelectedUser,
   setMessages,
 }: SidebarProps) {
+  // 모달 제어
   const [showModal, setShowModal] = React.useState<boolean>(false);
+  const [showFriedsList, setShowFriedsList] = React.useState<boolean>(false);
+  const [showCreateRoom, setShowCreateRoom] = React.useState<boolean>(false);
+
   const [searchQuery, setSearchQuery] = React.useState<string>("");
-  const [searchResults, setSearchResults] = React.useState<User[]>([]);
+  const [searchResults, setSearchResults] = React.useState<UserData[]>([]);
 
   const handleSearch = () => {
     setShowModal(true);
@@ -93,6 +105,28 @@ export function Sidebar({
   const closeModal = () => {
     setShowModal(false);
   };
+
+
+
+  const handleFriendsList = () => {
+    setShowFriedsList(true);
+  };
+
+  const closeFriendsList = () => {
+    setShowFriedsList(false);
+  };
+
+  const handleCreateRoom = () => {
+    setShowCreateRoom(true);
+  };
+
+  const closeCreateRoom = () => {
+    setShowCreateRoom(false);
+  };
+
+
+
+
 
   const handleSearchQueryChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -103,11 +137,33 @@ export function Sidebar({
   };
 
   const handelSearchButton = async (event: any) => {
-    const users = await fetchUsers(searchQuery);
+    const users = await fetchUsers(searchQuery, me.current);
     setSearchResults(users);
   };
 
-  const addFriends = async (user: User) => {
+  /**
+   * 친구 추가 처리
+   * @param user 
+   */
+  const addFriends = async (user: UserData) => {
+    const token = getCookie('onlineOpenChatAuth');
+
+    // 친구 추가 요청
+    const res = await api.post(
+      "/api/v1/user/add-friend",
+      {
+        friendNickname : user.name
+      }, // data
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    console.log("[addFriends] 친구 추가 요청 결과 : ", res);
+
+    /*
     setConnectedUsers((prevUsers) => {
       // user.id가 이미 prevUsers 배열에 있는지 확인
       const userExists = prevUsers.some(
@@ -122,12 +178,16 @@ export function Sidebar({
       // 존재하지 않는 경우에만 추가
       return [...prevUsers, user];
     });
+    */
   };
 
-  const handleChangeChat = async (link: User) => {
+  const handleChangeRoom = async (room: Room) => {
     const token = getCookie('onlineOpenChatAuth');
 
+    console.log('선택된 채팅방 : ', room);
+
     // TODO : redis를 통해 채팅 로그를 불러들어야함
+    /*
     const result = await api.get("/api/v1/chat/chat-list", {
       params: {
         name: link.name,
@@ -138,11 +198,13 @@ export function Sidebar({
       },
       withCredentials: true
     });
+    */
 
-    setMessages(result.data.result);
+    // setMessages(result.data.result);
 
-    window.localStorage.setItem("selectedUser", JSON.stringify(link));
-    setSelectedUser(link);
+    // 채팅 UI 상단 채팅방 제목 부분
+    //window.localStorage.setItem("selectedUser", JSON.stringify(link));
+    //setSelectedUser(link);
   };
 
   return (
@@ -187,14 +249,23 @@ export function Sidebar({
           </List>
         </DialogContent>
       </Dialog>
+
+
+      {/* 방 생성하기 UI*/}
+      <CreateRoomDialog  showModal={showCreateRoom} friendList={friendList} roomList={roomList} setRoomList={setRoomList} onClose={closeCreateRoom}/>
+      
+      {/* 친구 추가하기 UI*/}
+      <FriendsListDialog showModal={showFriedsList} friendList={friendList} onClose={closeFriendsList}/>
+
       {!isCollapsed && (
         <div className="flex justify-between p-2 items-center">
           <div className="flex gap-2 items-center text-2xl">
-            <p className="font-medium">Chats</p>
-            <span className="text-zinc-300">({links.length})</span>
+            <p className="font-medium">참여중인 채팅방 목록</p>
+            <span className="text-zinc-300">({roomList.length})</span>
           </div>
 
           <div>
+            {/* 친구 목록 버튼 */}
             <Link
               href="#"
               className={cn(
@@ -202,13 +273,35 @@ export function Sidebar({
                 "h-9 w-9"
               )}
             >
-              <Search size={20} onClick={handleSearch} />
+              <User size={20} onClick={handleFriendsList} />
+            </Link>
+
+            {/* 친구 추가 버튼 */}
+            <Link
+              href="#"
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "icon" }),
+                "h-9 w-9"
+              )}
+            >
+              <UserPlus size={20} onClick={handleSearch} />
+            </Link>
+
+            {/* 채팅방 생성 버튼 */}
+            <Link
+              href="#"
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "icon" }),
+                "h-9 w-9"
+              )}
+            >
+              <MessageSquarePlus size={20} onClick={handleCreateRoom} />
             </Link>
           </div>
         </div>
       )}
       <nav className="grid gap-1 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2">
-        {links.map((link, index) =>
+        {roomList.map((room, index) =>
           isCollapsed ? (
             <TooltipProvider key={index}>
               <Tooltip key={index} delayDuration={0}>
@@ -220,14 +313,14 @@ export function Sidebar({
                       "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
                     )}
                   >
-                    <span className="sr-only">{link.name}</span>
+                    <span className="sr-only">{room.name}</span>
                   </Link>
                 </TooltipTrigger>
                 <TooltipContent
                   side="right"
                   className="flex items-center gap-4"
                 >
-                  {link.name}
+                  {room.name}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -240,18 +333,21 @@ export function Sidebar({
                 "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white shrink"
               )}
               onClick={() => {
-                handleChangeChat(link);
+                handleChangeRoom(room);
               }}
             >
+              
               <div className="flex flex-col max-w-28">
-                <span>{link.name}</span>
-                {link.messages.length > 0 && (
+                <span>{room.name}</span>
+                {/** 
+                {room.messages.length > 0 && (
                   <span className="text-zinc-300 text-xs truncate ">
                     {link.messages[link.messages.length - 1].name.split(" ")[0]}
                     : {link.messages[link.messages.length - 1].message}
-                  </span>
-                )}
+                  </span> 
+                )}*/}
               </div>
+               
             </Link>
           )
         )}
