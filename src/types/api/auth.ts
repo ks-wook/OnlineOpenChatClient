@@ -29,5 +29,18 @@ interface CreateUserResponse {
  * 내 정보조회 : /get-my-info
  */
 interface GetMyInfoResponse {
+    /**
+     * 결과
+     */
+    result : string
+    
+    /**
+     * 유저 ID 값(UID)
+     */
+    userId : number;
+
+    /**
+     * 유저 닉네임
+     */
     nickname : string
 }

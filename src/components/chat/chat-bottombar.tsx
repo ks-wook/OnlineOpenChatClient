@@ -12,22 +12,24 @@ import React, { useRef, useState } from "react";
 import { buttonVariants } from "../ui/button";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
-import { Message, User, loggedInUserData } from "@/app/data";
+import { Message, RedisMessageType, Room, User, WebSocketMsg, loggedInUserData } from "@/app/data";
 import { Textarea } from "../ui/textarea";
 import { EmojiPicker } from "../emoji-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 interface ChatBottombarProps {
   me: React.RefObject<string>;
-  selectedUser: User;
-  sendMessage: (newMessage: Message) => void;
+  // selectedUser: User;
+
+  selectedRoom : Room | null;
+  sendMessage: (newMessage: WebSocketMsg) => void;
 }
 
 export const BottombarIcons = [{ icon: FileImage }, { icon: Paperclip }];
 
 export default function ChatBottombar({
   me,
-  selectedUser,
+  selectedRoom,
   sendMessage,
 }: ChatBottombarProps) {
   const [message, setMessage] = useState("");
@@ -38,12 +40,14 @@ export default function ChatBottombar({
   };
 
   const handleSend = () => {
-    if (message.trim() && me.current != null) {
-      const newMessage: Message = {
-        from: me.current,
-        to: selectedUser.name,
+    if (message.trim() && me.current != null && selectedRoom) {
+      const newMessage: WebSocketMsg = {
+        type: RedisMessageType.NEW_MESSAGE,
+        roomId: selectedRoom.id,
         message: message.trim(),
+        senderName: me.current
       };
+
       sendMessage(newMessage);
       setMessage("");
 

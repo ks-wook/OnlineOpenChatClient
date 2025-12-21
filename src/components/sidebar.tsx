@@ -11,7 +11,7 @@ import {
   TooltipProvider,
 } from "@/components/ui/tooltip";
 import { Avatar, AvatarImage } from "./ui/avatar";
-import { User as UserData, Message, Friend, Room } from "@/app/data";
+import { User as UserData, Message, Friend, Room, WebSocketMsg } from "@/app/data";
 import React, { useEffect } from "react";
 
 import {
@@ -31,6 +31,7 @@ import "@mui/material/styles"; // MUI 스타일 추가
 import api from "@/lib/axios";
 import CreateRoomDialog from "./dialog/CreateRoomDialog";
 import FriendsListDialog from "./dialog/FriendsListDialog";
+import { ChatSubscriptionManager } from "@/lib/chatSubscriptions";
 
 interface SidebarProps {
   me: React.RefObject<string>;
@@ -39,6 +40,7 @@ interface SidebarProps {
   friendList : Friend[];
   roomList : Room[];
   selectedRoom : Room | null;
+  chatSubscriptionManager : ChatSubscriptionManager | null;
   setRoomList: React.Dispatch<React.SetStateAction<Room[]>>;
   setSelectedRoom: React.Dispatch<React.SetStateAction<Room | null>>;
   setConnectedUsers: React.Dispatch<React.SetStateAction<UserData[]>>;
@@ -88,6 +90,7 @@ export function Sidebar({
   isCollapsed,
   roomList,
   selectedRoom,
+  chatSubscriptionManager,
   setRoomList,
   setConnectedUsers,
   setSelectedRoom,
@@ -210,13 +213,44 @@ export function Sidebar({
     //window.localStorage.setItem("selectedUser", JSON.stringify(link));
     // setSelectedUser('test');
 
+    // 채팅방의 ID를 통해 채팅용 웹소켓 연결
+    if(room !== null && chatSubscriptionManager) {
+      // 이전에 구독중이던 방 구독 해제
 
-    // TODO : 채팅방의 ID를 통해 채팅용 웹소켓 연결
+      console.log('이전에 구독중이던 채팅방 해제...');
+      chatSubscriptionManager.unsubscribeChatRoom();
 
+      // 새로운 채팅방에 대해 구독 요청
+      chatSubscriptionManager.subscribeChatRoom(room.id, (payload) => {
+        console.log("[chat message]", payload as WebSocketMsg);
 
-    
-    // 현재 채팅중인 방 세팅
-    setSelectedRoom(room);
+        // 현재 선택된 room에 대해 다른 값은 유지하고 message 값만 update
+        setSelectedRoom(prev => {
+          if (!prev) return prev;
+
+          if(prev.messages === undefined || prev.messages === null) {
+            prev.messages = [];
+          }
+
+          return {
+            ...prev,                 // 기존 room 유지
+            messages: [...prev.messages, payload] // messages만 갱신
+          };
+        });
+
+      });
+
+      // UI에 현재 사용중인 방 세팅
+      setSelectedRoom(room);
+
+      console.log(`${room.id} 번 방에 구독이 완료되었습니다.`);
+    }
+    else { // 채팅방 선택 오류 발생
+      console.error('채팅방 입장에 실패 하였습니다.');
+      console.log('선택된 채팅방 : ', room);
+      console.log('chatSubscriptionManager : ', chatSubscriptionManager);
+    }    
+
   };
 
   return (
@@ -264,7 +298,7 @@ export function Sidebar({
 
 
       {/* 방 생성하기 UI*/}
-      <CreateRoomDialog  showModal={showCreateRoom} friendList={friendList} roomList={roomList} setRoomList={setRoomList} onClose={closeCreateRoom}/>
+      <CreateRoomDialog  showModal={showCreateRoom} friendList={friendList} roomList={roomList} setRoomList={setRoomList} onClose={closeCreateRoom} myName={me.current}/>
       
       {/* 친구 추가하기 UI*/}
       <FriendsListDialog showModal={showFriedsList} friendList={friendList} onClose={closeFriendsList}/>

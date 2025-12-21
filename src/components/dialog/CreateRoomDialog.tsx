@@ -17,6 +17,7 @@ type Props = {
   showModal: boolean
   friendList: Friend[],
   roomList: Room[],
+  myName : string | null,
   setRoomList: React.Dispatch<React.SetStateAction<Room[]>>
   onClose: () => void
 }
@@ -38,7 +39,7 @@ const dummyFriends: Friend2[] = [
 /**
  * 새 채팅방 설정용 컴포넌트
  */
-export default function CreateRoomDialog({ showModal, friendList, roomList, setRoomList, onClose }: Props) {
+export default function CreateRoomDialog({ showModal, friendList, roomList, myName, setRoomList, onClose }: Props) {
   const [selectedFriends, setSelectedFriends] = useState<Friend[]>([])
   const [roomName, setRoomName] = useState('')
 
@@ -62,10 +63,13 @@ export default function CreateRoomDialog({ showModal, friendList, roomList, setR
     })
     */
 
+    const inviteeNames = [...selectedFriends.map(friend => friend.nickname), myName];
+    console.log(inviteeNames);
+
     // setRoomList 호출하여 새로운 채팅방 추가 -> API 성공한 경우만
     const res = await api.post<CreateRoomResponse>("/api/v1/chat/create-room", {
       roomName: roomName,
-      participants : selectedFriends.map(friend => friend.nickname)
+      participants : inviteeNames
     });
 
     console.log('[CreateRoomResponse] 방 생성 요청 결과 : ', res);

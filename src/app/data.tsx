@@ -20,17 +20,22 @@ export interface Message {
 /**
  * 메시지 형태2
  */
-export interface Message2 {
-  roomId: string; // 방 번호
-  senderUserId: string; // 보낸이의 아이디(닉네임)
+export interface WebSocketMsg {
+  type : number; // 메시지 브로커 메시지 타입 (RedisMessage.java)
+  roomId: number; // 방 번호
   message: string; // 메시지 내용
+  senderName : string; // 송신자의 닉네임
 }
-
 
 export type User = {
   messages: Message[];
   name: string;
 };
+
+export enum RedisMessageType {
+  INVITE,
+  NEW_MESSAGE
+}
 
 
 /**
@@ -47,6 +52,11 @@ export interface Room {
    * 채팅방명
    */
   name : string
+
+  /**
+   * 채팅 내역
+   */
+  messages : WebSocketMsg[];
 }
 
 /**
