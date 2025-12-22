@@ -15,7 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Sidebar } from "../sidebar";
 import { Chat } from "./chat";
-import { User, Message, Friend, Room, WebSocketMsg } from "@/app/data";
+import { User, Message, Friend, Room, WebSocketMsg, RedisMessageType } from "@/app/data";
 import api from "@/lib/axios";
 import { redirect } from "next/navigation";
 
@@ -218,8 +218,22 @@ export function ChatLayout({
             managerRef.current = new ChatSubscriptionManager(C);
 
             // 유저 알림 채널 구독 요청
-            managerRef.current.subscribeNotification(myId.current, () => {
-              console.log('알림서버 채널에 구독이 완료되었습니다!');
+            managerRef.current.subscribeNotification(myId.current, (payload) => {
+              const notification : WebSocketMsg = payload as WebSocketMsg;
+              console.log('알림 수신 : ', notification);
+
+              // 받은 메시지의 타입이 invite인 경우 채팅방 생성
+              if(notification.type === "INVITE") {              
+                // 새로운 채팅방 추가
+                const newRoom : Room = {
+                  id : notification.roomId,
+                  name : notification.roomName,
+                  messages : []
+                } as Room
+
+                setRoomList(prev => [...prev, newRoom]);
+              
+              }
             });
 
             // subscribe(C); // Pass the client instance

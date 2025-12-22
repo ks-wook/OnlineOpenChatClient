@@ -21,10 +21,11 @@ export interface Message {
  * 메시지 형태2
  */
 export interface WebSocketMsg {
-  type : number; // 메시지 브로커 메시지 타입 (RedisMessage.java)
+  type : string; // 메시지 브로커 메시지 타입 (RedisMessage.java)
   roomId: number; // 방 번호
   message: string; // 메시지 내용
   senderName : string; // 송신자의 닉네임
+  roomName : string; // 수신된 채팅방 명
 }
 
 export type User = {
