@@ -27,6 +27,8 @@ import { GetFriendListResponse } from "@/types/api/user";
 import { GetJoinedRoomsResponse } from "@/types/api/chat";
 import { subscribeNotificationChannel } from "@/lib/notificationSubscriber";
 import { ChatSubscriptionManager } from "@/lib/chatSubscriptions";
+import { Menu } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ChatLayoutProps {
   defaultLayout: number[] | undefined;
@@ -57,6 +59,12 @@ export function ChatLayout({
   // 현재 선택된 채팅방
   const [selectedRoom, setSelectedRoom] = React.useState<Room | null>(null);
 
+  // 모바일에서 사이드바 표시 여부
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = React.useState(true);
+  
+  // 모바일 여부 감지
+  const [isMobile, setIsMobile] = React.useState(false);
+
   const myNickname = useRef<string | undefined>(undefined);
   const myId = useRef<number | undefined>(undefined);
 
@@ -66,6 +74,34 @@ export function ChatLayout({
    * 웹소켓 구독 관리 매니저 클래스
    */
   const managerRef = useRef<ChatSubscriptionManager | null>(null);
+
+  /**
+   * 모바일 감지
+   */
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    // 초기 체크
+    checkMobile();
+
+    // 윈도우 리사이즈 감지
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  /**
+   * selectedRoom이 null이 되면 모바일에서 사이드바 자동 표시
+   */
+  useEffect(() => {
+    if (selectedRoom === null && isMobile) {
+      setIsMobileSidebarOpen(true);
+    } else if (selectedRoom !== null && isMobile) {
+      setIsMobileSidebarOpen(false);
+    }
+  }, [selectedRoom, isMobile]);
 
 
   /**
@@ -207,67 +243,67 @@ export function ChatLayout({
 
   };
 
-  // connectChatServer();
-
   return (
-    <ResizablePanelGroup
-      direction="horizontal"
-      onLayout={(sizes: number[]) => {
-        document.cookie = `react-resizable-panels:layout=${JSON.stringify(
-          sizes
-        )}`;
-      }}
-      className="h-full items-stretch"
-    >
-      <ResizablePanel
-        defaultSize={defaultLayout[0]}
-        collapsedSize={navCollapsedSize}
-        collapsible={true}
-        minSize={24}
-        maxSize={30}
-        onCollapse={() => {
-          setIsCollapsed(true);
-          document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(
-            true
+
+      <ResizablePanelGroup
+        direction="horizontal"
+        onLayout={(sizes: number[]) => {
+          document.cookie = `react-resizable-panels:layout=${JSON.stringify(
+            sizes
           )}`;
         }}
-        onExpand={() => {
-          setIsCollapsed(false);
-          document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(
-            false
-          )}`;
-        }}
-        className={cn(
-          isCollapsed &&
-            "min-w-[50px] md:min-w-[70px] transition-all duration-300 ease-in-out"
-        )}
+        className="h-full items-stretch"
       >
-        <Sidebar
-          me={myNickname} // 현재 유저 닉네임
-          isCollapsed={isCollapsed}
-          friendList={friendList} // 친구 목록
-          roomList={roomList} // 채팅방 목록
-          selectedRoom={selectedRoom} // 현재 선택된 방
-          chatSubscriptionManagerRef={managerRef} // 구독 매니저 값
-          setRoomList={setRoomList}
-          setSelectedRoom={setSelectedRoom}
-        />
-      </ResizablePanel>
+        <ResizablePanel
+          defaultSize={defaultLayout[0]}
+          collapsedSize={navCollapsedSize}
+          collapsible={true}
+          minSize={24}
+          maxSize={30}
+          onCollapse={() => {
+            setIsCollapsed(true);
+            document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(
+              true
+            )}`;
+          }}
+          onExpand={() => {
+            setIsCollapsed(false);
+            document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(
+              false
+            )}`;
+          }}
+          className={cn(
+            isCollapsed &&
+              "min-w-[50px] md:min-w-[70px] transition-all duration-300 ease-in-out",
+            isMobile && !isMobileSidebarOpen && "hidden"
+          )}
+        >
+          <Sidebar
+            me={myNickname} // 현재 유저 닉네임
+            isCollapsed={isCollapsed}
+            friendList={friendList} // 친구 목록
+            roomList={roomList} // 채팅방 목록
+            selectedRoom={selectedRoom} // 현재 선택된 방
+            chatSubscriptionManagerRef={managerRef} // 구독 매니저 값
+            setRoomList={setRoomList}
+            setSelectedRoom={setSelectedRoom}
+          />
+        </ResizablePanel>
 
-      {selectedRoom && (
-        <>
-          <ResizableHandle withHandle />
+        {selectedRoom && (
+          <>
+            <ResizableHandle withHandle className={cn(isMobile && "hidden")} />
 
-          <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
-            <Chat
-              me={myNickname}
-              client={client}
-              selectedRoom={selectedRoom}
-              setSelectedRoom={setSelectedRoom}
-            />
-          </ResizablePanel>
-        </>
-      )}
-    </ResizablePanelGroup>
+            <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
+              <Chat
+                me={myNickname}
+                client={client}
+                selectedRoom={selectedRoom}
+                setSelectedRoom={setSelectedRoom}
+              />
+            </ResizablePanel>
+          </>
+        )}
+      </ResizablePanelGroup>
   );
 }
