@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 
+import { GlobalModalProvider } from '@/components/modal/GlobalModalProvider';
+
 export const metadata: Metadata = {
   title: "Spring Chat Platform",
   description: "Spring Chat Platform",
@@ -21,7 +23,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={GeistSans.className}>{children}</body>
+      <body className={GeistSans.className}>
+        <GlobalModalProvider>
+          {children}
+        </GlobalModalProvider>
+      </body>
     </html>
   );
 }

@@ -1,10 +1,13 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from 'next/navigation';
 import "./auth.css";
 import api from "@/lib/axios";
 import axios from "axios";
+
+import { useGlobalModal } from '@/components/modal/GlobalModalProvider';
+
 
 /**
  * 로그인 화면 UI 컴포넌트
@@ -15,7 +18,10 @@ export default function Login() {
   const [password, setPassword] = useState<string>("");
   const router = useRouter();
 
+  const { openModal } = useGlobalModal();
+
   useEffect(() => {
+
     // 쿠키값이 있는지 검증
     const authCookie = document.cookie
       .split("; ")
@@ -32,15 +38,44 @@ export default function Login() {
     event.preventDefault();
 
     // 로그인 API 요청
-    const result = await api.post("/api/v1/auth/login", {
-      name: username,
+    const result = await api.post<LoginResponse>("/api/v1/auth/login", {
+      loginId: username,
       password: password,
     });
 
     console.log('[Login] 로그인 API 요청 결과 : ', result.data);
 
-    if (result.status !== 200) {
-      alert("존재하지 않은 User 입니다.");
+    if (result.status !== 200 || result.data.result === "INTERNAL_SERVER_ERROR") {
+      openModal({
+        title: '요청 실패',
+        content: (
+          <div className="text-green-600">
+            로그인 요청에 실패하였습니다.
+          </div>
+        ),
+      });
+      return;
+    }
+    else if (result.data.result === "NOT_EXIST_USER") {
+      openModal({
+        title: '요청 실패',
+        content: (
+          <div className="text-green-600">
+            존재하지 않는 유저입니다.
+          </div>
+        ),
+      });
+      return;
+    }
+    else if (result.data.result === "MIS_MATCH_PASSWORD") {
+      openModal({
+        title: '요청 실패',
+        content: (
+          <div className="text-green-600">
+            비밀번호가 일치하지 않습니다.
+          </div>
+        ),
+      });
       return;
     }
 
@@ -53,11 +88,12 @@ export default function Login() {
   return (
     <div className="auth-container">
       <div className="auth-form">
-        <h2 className="auth-title">Login</h2>
+        <h2 className="auth-title">Web Talk</h2>
+        <h3 className="auth-label" style={{ textAlign: "center" }}>웹기반 메신저</h3>
         <form onSubmit={handleSubmit}>
           <div>
             <label htmlFor="username" className="auth-label">
-              Username
+              ID
             </label>
             <input
               type="text"
@@ -86,7 +122,7 @@ export default function Login() {
           </button>
         </form>
         <p className="auth-footer">
-          Don't have an account? <a href="/register">Sign Up</a>
+          처음이신가요? <a href="/register">회원가입</a>
         </p>
       </div>
     </div>
