@@ -1,4 +1,4 @@
-import { Room, WebSocketMsg } from "@/app/data";
+import { MyInfo, Room, WebSocketMsg } from "@/app/data";
 import { cn } from "@/lib/utils";
 import React, { useRef } from "react";
 import { Avatar, AvatarImage } from "../ui/avatar";
@@ -7,13 +7,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Client } from "@stomp/stompjs";
 
 interface ChatListProps {
-  me: React.RefObject<string>;
+  myInfo : MyInfo | null;
   selectedRoom: Room | null;
   sendMessage: (newMessage: WebSocketMsg) => void;
 }
 
 export function ChatList({
-  me,
+  myInfo,
   selectedRoom,
   sendMessage,
 }: ChatListProps) {
@@ -53,18 +53,18 @@ export function ChatList({
               }}
               className={cn(
                 "flex flex-col gap-1 px-4 whitespace-pre-wrap mt-3",
-                message.senderName === me.current ? "items-end" : "items-start"
+                message.senderName === myInfo?.nickname ? "items-end" : "items-start"
               )}
             >
               {/* 상대 메시지일 경우 닉네임 표시 */}
-              {message.senderName !== me.current && (
+              {message.senderName !== myInfo?.nickname && (
                 <span className="text-xs text-muted-foreground ml-10">
                   {message.senderName}
                 </span>
               )}
 
               <div className="flex gap-3 items-end">
-                {message.senderName !== me.current && (
+                {message.senderName !== myInfo?.nickname && (
                   <Avatar className="flex justify-center items-center">
                     <AvatarImage alt={message.senderName} width={24} height={24} />
                   </Avatar>
@@ -74,7 +74,7 @@ export function ChatList({
                   {message.message}
                 </span>
 
-                {message.senderName === me.current && (
+                {message.senderName === myInfo?.nickname && (
                   <Avatar className="flex justify-center items-center">
                     <AvatarImage alt={message.senderName} width={24} height={24} />
                   </Avatar>
@@ -86,7 +86,7 @@ export function ChatList({
 
       </div>
       <ChatBottombar
-        me={me}
+        myInfo={myInfo}
         selectedRoom={selectedRoom}
         sendMessage={sendMessage}
       />

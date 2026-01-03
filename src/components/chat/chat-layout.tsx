@@ -15,20 +15,14 @@ import {
 import { cn } from "@/lib/utils";
 import { Sidebar } from "../sidebar";
 import { Chat } from "./chat";
-import { Friend, Room, WebSocketMsg } from "@/app/data";
+import { Friend, MyInfo, Room, WebSocketMsg } from "@/app/data";
 import api from "@/lib/axios";
-import { redirect } from "next/navigation";
 
 import * as StompJs from "@stomp/stompjs";
-// import { User, User } from "lucide-react";
-import { useUnmountEffect } from "framer-motion";
 import { Client } from "@stomp/stompjs";
 import { GetFriendListResponse } from "@/types/api/user";
 import { GetJoinedRoomsResponse } from "@/types/api/chat";
-import { subscribeNotificationChannel } from "@/lib/notificationSubscriber";
 import { ChatSubscriptionManager } from "@/lib/chatSubscriptions";
-import { Menu } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface ChatLayoutProps {
   defaultLayout: number[] | undefined;
@@ -65,8 +59,10 @@ export function ChatLayout({
   // 모바일 여부 감지
   const [isMobile, setIsMobile] = React.useState(false);
 
-  const myNickname = useRef<string | undefined>(undefined);
-  const myId = useRef<number | undefined>(undefined);
+  /**
+   * 현재 유저 정보
+   */
+  const [myInfo, setMyInfo] = useState<MyInfo | null>(null);
 
   const [client, setClient] = React.useState<Client | null>(null);
 
@@ -103,35 +99,41 @@ export function ChatLayout({
     }
   }, [selectedRoom, isMobile]);
 
+  /**
+   * 유저정보 갱신
+   */
+  const initMyInfo = async () => {
+    try {
+      // 1) UI 로딩 시 호출이 필요한 API들 정리
+      const promises = [
+        getMyInfo(),
+        getFriendList(),
+        getChatRoomList(),
+      ];
+
+      // 2) 모든 Promise 완료 대기
+      await Promise.all(promises);
+
+    } catch (e) {
+      console.error('chat layout 마운트 에러 발생', e);
+    }
+  };
 
   /**
    * chat-layout 마운트 완료 시 최초 한번 호출
    */
   useEffect(() => {
-    const init = async () => {
-      try {
-        // 1) UI 로딩 시 호출이 필요한 API들 정리
-        const promises = [
-          getMyInfo(),
-          getFriendList(),
-          getChatRoomList(),
-        ];
-
-        // 2) 모든 Promise 완료 대기
-        await Promise.all(promises);
-
-        // 3) 모두 처리된 이후 채팅서버 접속(웹소켓) 처리 로직 실행
-        connectChatServer();
-
-        console.log('채팅 프로그램 접속 완료...');
-
-      } catch (e) {
-        console.error('chat layout 마운트 에러 발생', e);
-      }
-    };
-
-    init();
+    initMyInfo();
   }, []);
+
+ /**
+   * 유저 정보 갱신 완료 후 웹소켓 접속
+   */
+  useEffect(() => {
+    if(myInfo) {
+      connectChatServer();
+    }
+  }, [myInfo]);
 
   /**
    * 현재 유저 닉네임 세팅
@@ -141,9 +143,15 @@ export function ChatLayout({
       const res = await api.get<GetMyInfoResponse>('/api/v1/auth/get-my-info');
       console.log('[getMyInfo] /get-my-info 호출 결과 : ', res);
 
-      // 현재 유저 닉네임 세팅
-      myNickname.current = res.data.nickname;
-      myId.current = res.data.userId;
+      // 현재 유저 정보 세팅
+      setMyInfo({
+        userId: res.data.userId,
+        nickname: res.data.nickname,
+        statusText: res.data.statusText
+      } as MyInfo);
+
+      console.log('현재 유저 정보 세팅 완료 : ', myInfo);
+
     } catch (e) {
       console.log('Not logged in');
     }
@@ -204,7 +212,7 @@ export function ChatLayout({
             managerRef.current = new ChatSubscriptionManager(C);
 
             // 유저 알림 채널 구독 요청
-            managerRef.current.subscribeNotification(myId.current, (payload) => {
+            managerRef.current.subscribeNotification(myInfo?.userId, (payload) => {
               const notification : WebSocketMsg = payload as WebSocketMsg;
               console.log('알림 수신 : ', notification);
 
@@ -280,15 +288,16 @@ export function ChatLayout({
           )}
         >
           <Sidebar
-            me={myNickname} // 현재 유저 닉네임
             isCollapsed={isCollapsed}
             friendList={friendList} // 친구 목록
             roomList={roomList} // 채팅방 목록
             selectedRoom={selectedRoom} // 현재 선택된 방
             chatSubscriptionManagerRef={managerRef} // 구독 매니저 값
+            myInfo={myInfo}
             setRoomList={setRoomList}
             setSelectedRoom={setSelectedRoom}
             setFriendList={setFriendList}
+            initMyInfo={initMyInfo} // 유저 정보 갱신 함수
           />
         </ResizablePanel>
 
@@ -298,7 +307,7 @@ export function ChatLayout({
 
             <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
               <Chat
-                me={myNickname}
+                myInfo={myInfo}
                 client={client}
                 selectedRoom={selectedRoom}
                 setSelectedRoom={setSelectedRoom}

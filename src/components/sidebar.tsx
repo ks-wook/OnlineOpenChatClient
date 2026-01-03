@@ -10,7 +10,7 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
-import { SearchedUser as UserData, Friend, Room, WebSocketMsg } from "@/app/data";
+import { SearchedUser as UserData, Friend, Room, WebSocketMsg, MyInfo } from "@/app/data";
 
 import {
   Dialog,
@@ -33,17 +33,16 @@ import { AddFriendResponse, GetFriendListResponse } from "@/types/api/user";
 import { useGlobalModal } from '@/components/modal/GlobalModalProvider';
 
 interface SidebarProps {
-  me: React.RefObject<string>;
   isCollapsed: boolean;
   friendList : Friend[];
   roomList : Room[];
   selectedRoom : Room | null;
+  myInfo: MyInfo | null;
   chatSubscriptionManagerRef: React.RefObject<ChatSubscriptionManager | null>;
   setRoomList: React.Dispatch<React.SetStateAction<Room[]>>;
   setSelectedRoom: React.Dispatch<React.SetStateAction<Room | null>>;
-  setConnectedUsers: React.Dispatch<React.SetStateAction<UserData[]>>;
-  setSelectedUser: React.Dispatch<React.SetStateAction<UserData | null>>;
   setFriendList : React.Dispatch<React.SetStateAction<Friend[]>>;
+  initMyInfo: () => Promise<void>;
 }
 
 const searchResult = (name: string): UserData => {
@@ -58,7 +57,7 @@ function getCookie(name: string): string | undefined {
   if (parts.length === 2) return parts.pop()?.split(";").shift();
 }
 
-export const fetchUsers = async (searchQuery: string, myName: string | null): Promise<UserData[]> => {
+export const fetchUsers = async (searchQuery: string, myName: string | undefined | null): Promise<UserData[]> => {
   const token = getCookie("onlineOpenChatAuth");
 
   if (!token) {
@@ -81,12 +80,12 @@ export const fetchUsers = async (searchQuery: string, myName: string | null): Pr
 };
 
 export function Sidebar({
-  me,
   friendList,
   isCollapsed,
   roomList,
   selectedRoom,
   chatSubscriptionManagerRef,
+  myInfo,
   setRoomList,
   setSelectedRoom,
   setFriendList,
@@ -127,8 +126,6 @@ export function Sidebar({
 
 
 
-
-
   const handleSearchQueryChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -138,7 +135,8 @@ export function Sidebar({
   };
 
   const handelSearchButton = async (event: any) => {
-    const users = await fetchUsers(searchQuery, me.current);
+    console.log("검색어 : ", myInfo?.nickname);
+    const users = await fetchUsers(searchQuery, myInfo?.nickname);
     setSearchResults(users);
   };
 
@@ -324,10 +322,10 @@ export function Sidebar({
 
 
       {/* 방 생성하기 UI*/}
-      <CreateRoomDialog  showModal={showCreateRoom} friendList={friendList} roomList={roomList} setRoomList={setRoomList} onClose={closeCreateRoom} myName={me.current}/>
+      <CreateRoomDialog  showModal={showCreateRoom} friendList={friendList} roomList={roomList} setRoomList={setRoomList} onClose={closeCreateRoom} myName={myInfo?.nickname}/>
       
       {/* 친구 추가하기 UI*/}
-      <FriendsListDialog showModal={showFriedsList} friendList={friendList} onClose={closeFriendsList}/>
+      <FriendsListDialog showModal={showFriedsList} friendList={friendList} onClose={closeFriendsList} myInfo={myInfo}/>
 
       {!isCollapsed && selectedRoom === null && (
         <div className="flex justify-between p-2 items-center">

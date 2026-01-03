@@ -6,7 +6,7 @@ interface LoginRequest {
     /**
      * 로그인 요청할 id 값
      */
-    loginId : string,
+    loginId : string
 
     /**
      * 계정 패스워드
@@ -28,7 +28,7 @@ interface LoginResponse {
     /**
      * 로그인된 유저 닉네임
      */
-    nickname : string
+    nickname : string;
 }
 
 
@@ -44,7 +44,7 @@ interface CreateUserRequest {
     /**
      * 계정 패스워드
      */
-    password : string
+    password : string;
 }
 
 interface CreateUserResponse {
@@ -56,7 +56,7 @@ interface CreateUserResponse {
     /**
      * 생성된 유저 닉네임
      */
-    nickname : string
+    nickname : string;
 }
 
 /**
@@ -67,14 +67,26 @@ interface GetMyInfoResponse {
      * 결과
      */
     result : string
-    
+
     /**
      * 유저 ID 값(UID)
      */
-    userId : number;
+    userId : number
 
     /**
      * 유저 닉네임
      */
     nickname : string
+
+    /**
+     * 상태 메시지
+     */
+    statusText : string
+}
+
+interface LogoutResponse {
+    /**
+     * 결과
+     */
+    result : string;
 }

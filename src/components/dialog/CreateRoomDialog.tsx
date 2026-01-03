@@ -18,7 +18,7 @@ type Props = {
   showModal: boolean
   friendList: Friend[],
   roomList: Room[],
-  myName : string | null,
+  myName : string | null | undefined,
   setRoomList: React.Dispatch<React.SetStateAction<Room[]>>
   onClose: () => void
 }
@@ -198,7 +198,7 @@ export default function CreateRoomDialog({ showModal, friendList, roomList, myNa
                             {friend.nickname}
                           </span>
                           <span className="text-xs text-gray-500">
-                            {"TODO : 유저의 상태메시지가 노출"}
+                            {friend.statusText || '상태 메시지가 없습니다.'}
                           </span>
                         </div>
                       </label>

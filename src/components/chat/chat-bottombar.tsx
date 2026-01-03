@@ -11,16 +11,14 @@ import Link from "next/link";
 import React, { useRef, useState } from "react";
 import { buttonVariants } from "../ui/button";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, motion } from "framer-motion";
-import { Message, RedisMessageType, Room, User, WebSocketMsg, loggedInUserData } from "@/app/data";
+import { AnimatePresence, m, motion } from "framer-motion";
+import { MyInfo, RedisMessageType, Room, WebSocketMsg } from "@/app/data";
 import { Textarea } from "../ui/textarea";
 import { EmojiPicker } from "../emoji-picker";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Popover, PopoverTrigger } from "../ui/popover";
 
 interface ChatBottombarProps {
-  me: React.RefObject<string>;
-  // selectedUser: User;
-
+  myInfo : MyInfo | null;
   selectedRoom : Room | null;
   sendMessage: (newMessage: WebSocketMsg) => void;
 }
@@ -28,7 +26,7 @@ interface ChatBottombarProps {
 export const BottombarIcons = [{ icon: FileImage }, { icon: Paperclip }];
 
 export default function ChatBottombar({
-  me,
+  myInfo,
   selectedRoom,
   sendMessage,
 }: ChatBottombarProps) {
@@ -40,12 +38,14 @@ export default function ChatBottombar({
   };
 
   const handleSend = () => {
-    if (message.trim() && me.current != null && selectedRoom) {
+    console.log(myInfo?.nickname)
+    if (message.trim() && myInfo?.nickname != null && selectedRoom) {
+      console.log("Preparing to send message...", message);
       const newMessage: WebSocketMsg = {
         type: RedisMessageType.NEW_MESSAGE,
         roomId: selectedRoom.id,
         message: message.trim(),
-        senderName: me.current
+        senderName: myInfo.nickname
       };
 
       sendMessage(newMessage);
@@ -58,6 +58,7 @@ export default function ChatBottombar({
   };
 
   const handleKeyPress = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       handleSend();

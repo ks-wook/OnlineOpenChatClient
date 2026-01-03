@@ -62,4 +62,15 @@ export interface Friend {
    * 유저 닉네임
    */
   nickname : string;
+
+  /**
+   * 상태 메시지
+   */
+  statusText : string;
+}
+
+export interface MyInfo {
+  userId : number;
+  nickname : string;
+  statusText : string;
 }

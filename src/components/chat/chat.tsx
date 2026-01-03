@@ -1,18 +1,18 @@
-import { Room, WebSocketMsg } from "@/app/data";
+import { MyInfo, Room, WebSocketMsg } from "@/app/data";
 import ChatTopbar from "./chat-topbar";
 import { ChatList } from "./chat-list";
 import React from "react";
 import { Client } from "@stomp/stompjs";
 
 interface ChatProps {
-  me: React.RefObject<string>;
+  myInfo : MyInfo | null;
   client: Client;
   selectedRoom: Room | null;
   setSelectedRoom: React.Dispatch<React.SetStateAction<Room | null>>;
 }
 
 export function Chat({
-  me,
+  myInfo,
   client,
   selectedRoom,
   setSelectedRoom,
@@ -24,6 +24,9 @@ export function Chat({
    * @param newMessage
    */
   const sendMessage = (newMessage: WebSocketMsg) => {
+
+    console.log("Sending message...", newMessage);
+
     if (client) {
       // 현재 선택된 채팅방으로 메시지 퍼블리싱
       if(selectedRoom) {
@@ -45,7 +48,7 @@ export function Chat({
       />
 
       <ChatList
-        me={me}
+        myInfo={myInfo}
         selectedRoom={selectedRoom}
         sendMessage={sendMessage}
       />
