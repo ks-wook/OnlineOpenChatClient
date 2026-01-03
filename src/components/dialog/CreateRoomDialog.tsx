@@ -2,7 +2,7 @@
 
 import { Friend, Room } from '@/app/data'
 import api from '@/lib/axios'
-import { CreateRoomRequest, CreateRoomResponse } from '@/types/api/chat'
+import { CreateRoomResponse } from '@/types/api/chat'
 import {
   Dialog,
   DialogPanel,
@@ -12,6 +12,7 @@ import {
   TransitionChild,
 } from '@headlessui/react'
 import { Fragment, useEffect, useState } from 'react'
+import { useGlobalModal } from '@/components/modal/GlobalModalProvider';
 
 type Props = {
   showModal: boolean
@@ -42,6 +43,8 @@ const dummyFriends: Friend2[] = [
 export default function CreateRoomDialog({ showModal, friendList, roomList, myName, setRoomList, onClose }: Props) {
   const [selectedFriends, setSelectedFriends] = useState<Friend[]>([])
   const [roomName, setRoomName] = useState('')
+
+  const { openModal } = useGlobalModal();
 
   // console.log('전달받은 친구 리스트 : ', friendList);
 
@@ -75,14 +78,32 @@ export default function CreateRoomDialog({ showModal, friendList, roomList, myNa
     console.log('[CreateRoomResponse] 방 생성 요청 결과 : ', res);
 
     if(res.data.result === "SUCCESS") {
+      /*
       const newRoom = {
         name : res.data.roomName,
         id : res.data.roomId
       } as Room
+      */
+      // setRoomList(prev => [...prev, newRoom]);
 
-      setRoomList(prev => [...prev, newRoom]);
+      openModal({
+        title: '새로운 채팅방',
+        content: (
+          <div className="text-green-600">
+            채팅방({roomName})이 생성되었습니다.
+          </div>
+        ),
+      });
     }
     else {
+      openModal({
+        title: '요청 실패',
+        content: (
+          <div className="text-green-600">
+            채팅방 생성에 실패하였습니다.
+          </div>
+        ),
+      });
       console.error('[CreateRoomResponse] 채팅방 생성 실패');
     }
 
