@@ -150,8 +150,6 @@ export function ChatLayout({
         statusText: res.data.statusText
       } as MyInfo);
 
-      console.log('현재 유저 정보 세팅 완료 : ', myInfo);
-
     } catch (e) {
       console.log('Not logged in');
     }

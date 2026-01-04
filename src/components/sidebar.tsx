@@ -322,7 +322,7 @@ export function Sidebar({
 
 
       {/* 방 생성하기 UI*/}
-      <CreateRoomDialog  showModal={showCreateRoom} friendList={friendList} roomList={roomList} setRoomList={setRoomList} onClose={closeCreateRoom} myName={myInfo?.nickname}/>
+      <CreateRoomDialog  showModal={showCreateRoom} friendList={friendList} roomList={roomList} setRoomList={setRoomList} onClose={closeCreateRoom} myName={myInfo?.nickname} myId={myInfo?.userId}/>
       
       {/* 친구 추가하기 UI*/}
       <FriendsListDialog showModal={showFriedsList} friendList={friendList} onClose={closeFriendsList} myInfo={myInfo}/>

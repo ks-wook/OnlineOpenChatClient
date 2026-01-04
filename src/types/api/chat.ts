@@ -12,7 +12,7 @@ export interface CreateRoomRequest {
     /**
      * 참여자 명단(초대한 유저들)
      */
-    participants : string[]
+    participantIds : number[]
 }
 
 export interface CreateRoomResponse {
