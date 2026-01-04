@@ -24,6 +24,7 @@ type Props = {
   friendList: Friend[]
   myInfo: MyInfo | null
   onClose: () => void
+  setMyInfo?: React.Dispatch<React.SetStateAction<MyInfo | null>>
 }
 
 export default function FriendsListDialog({
@@ -31,6 +32,7 @@ export default function FriendsListDialog({
   friendList,
   myInfo,
   onClose,
+  setMyInfo,
 }: Props) {
   const [isEditingStatus, setIsEditingStatus] = useState(false)
   const [isEditingNickname, setIsEditingNickname] = useState(false)
@@ -64,6 +66,15 @@ export default function FriendsListDialog({
         title: '성공',
         content: <div className="text-green-600">상태 메시지가 변경되었습니다.</div>,
       })
+
+      // myInfo 상태 업데이트
+      if (setMyInfo && myInfo) {
+        setMyInfo({
+          ...myInfo,
+          statusText: res.data.statusText,
+        })
+      }
+
     } else {
       openModal({
         title: '요청 실패',
@@ -75,10 +86,9 @@ export default function FriendsListDialog({
   }
 
   const handleSaveNickname = async () => {
-    const res = await api.post<UpdateNicknameResponse>(
-      '/api/v1/user/update-nickname',
-      { newNickname: nickname }
-    )
+    const res = await api.post<UpdateNicknameResponse>('/api/v1/user/update-nickname', { 
+      newNickname: nickname 
+    })
 
     if (res.data.result === 'SUCCESS') {
       setNickname(res.data.changedNickname)
@@ -86,6 +96,15 @@ export default function FriendsListDialog({
         title: '성공',
         content: <div className="text-green-600">닉네임이 변경되었습니다.</div>,
       })
+
+      // myInfo 상태 업데이트
+      if (setMyInfo && myInfo) {
+        setMyInfo({
+          ...myInfo,
+          nickname: res.data.changedNickname,
+        })
+      }
+
     } else {
       openModal({
         title: '요청 실패',
@@ -96,6 +115,9 @@ export default function FriendsListDialog({
     setIsEditingNickname(false)
   }
 
+  /**
+   * 로그아웃 처리
+   */
   const logout = async () => {
     const res = await api.get('/api/v1/auth/logout')
 

@@ -64,7 +64,7 @@ export function ChatList({
               )}
 
               <div className="flex gap-3 items-end">
-                {message.senderName !== myInfo?.nickname && (
+                {message.userId !== myInfo?.userId && (
                   <Avatar className="flex justify-center items-center">
                     <AvatarImage alt={message.senderName} width={24} height={24} />
                   </Avatar>

@@ -43,6 +43,7 @@ interface SidebarProps {
   setSelectedRoom: React.Dispatch<React.SetStateAction<Room | null>>;
   setFriendList : React.Dispatch<React.SetStateAction<Friend[]>>;
   initMyInfo: () => Promise<void>;
+  setMyInfo: React.Dispatch<React.SetStateAction<MyInfo | null>>;
 }
 
 const searchResult = (name: string): UserData => {
@@ -89,6 +90,8 @@ export function Sidebar({
   setRoomList,
   setSelectedRoom,
   setFriendList,
+  initMyInfo,
+  setMyInfo,
 }: SidebarProps) {
   // 모달 제어
   const [showModal, setShowModal] = React.useState<boolean>(false);
@@ -325,7 +328,7 @@ export function Sidebar({
       <CreateRoomDialog  showModal={showCreateRoom} friendList={friendList} roomList={roomList} setRoomList={setRoomList} onClose={closeCreateRoom} myName={myInfo?.nickname} myId={myInfo?.userId}/>
       
       {/* 친구 추가하기 UI*/}
-      <FriendsListDialog showModal={showFriedsList} friendList={friendList} onClose={closeFriendsList} myInfo={myInfo}/>
+      <FriendsListDialog showModal={showFriedsList} friendList={friendList} onClose={closeFriendsList} myInfo={myInfo} setMyInfo={setMyInfo}/>
 
       {!isCollapsed && selectedRoom === null && (
         <div className="flex justify-between p-2 items-center">

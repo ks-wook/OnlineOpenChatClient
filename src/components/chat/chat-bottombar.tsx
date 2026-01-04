@@ -45,7 +45,8 @@ export default function ChatBottombar({
         type: RedisMessageType.NEW_MESSAGE,
         roomId: selectedRoom.id,
         message: message.trim(),
-        senderName: myInfo.nickname
+        senderName: myInfo.nickname,
+        userId: myInfo.userId,
       };
 
       sendMessage(newMessage);

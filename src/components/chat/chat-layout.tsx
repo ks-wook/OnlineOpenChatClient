@@ -296,6 +296,7 @@ export function ChatLayout({
             setSelectedRoom={setSelectedRoom}
             setFriendList={setFriendList}
             initMyInfo={initMyInfo} // 유저 정보 갱신 함수
+            setMyInfo={setMyInfo}
           />
         </ResizablePanel>
 

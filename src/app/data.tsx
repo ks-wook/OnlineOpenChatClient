@@ -7,6 +7,7 @@ export interface WebSocketMsg {
   message: string; // 메시지 내용
   senderName : string; // 송신자의 닉네임
   roomName : string; // 수신된 채팅방 명
+  userId : number; // 메시지 보낸 유저 ID
 }
 
 export type SearchedUser = {
