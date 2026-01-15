@@ -22,7 +22,7 @@ export default function Home() {
     <main className="flex h-[calc(100dvh)] flex-col items-center justify-center p-4 md:px-24 py-32 gap-4">
       <div className="flex justify-between max-w-5xl w-full items-center">
         <Link href="#" className="text-4xl font-bold text-gradient">
-          OnlineOpenChat 프로젝트 클라이언트
+          Web-Talk
         </Link>
       </div>
 

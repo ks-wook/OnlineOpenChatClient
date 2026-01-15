@@ -85,7 +85,7 @@ export default function Register() {
   return (
     <div className="auth-container">
       <div className="auth-form">
-        <h2 className="auth-title">회원가입</h2>
+        <h2 className="auth-label" style={{ textAlign: "center", fontSize: "1.5rem" }}>회원가입</h2>
         <form onSubmit={handleSubmit}>
           <div>
             <label htmlFor="username" className="auth-label">
@@ -113,7 +113,7 @@ export default function Register() {
               className="auth-input"
             />
           </div>
-          <button type="submit" className="auth-button">
+          <button type="submit" className="auth-button" style={{background: "#a78bfa"}}>
             Sign Up
           </button>
         </form>
