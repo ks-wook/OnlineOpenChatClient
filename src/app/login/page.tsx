@@ -16,6 +16,7 @@ import { useGlobalModal } from '@/components/modal/GlobalModalProvider';
 export default function Login() {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [showAnimation, setShowAnimation] = useState<boolean>(false);
   const router = useRouter();
 
   const { openModal } = useGlobalModal();
@@ -82,14 +83,47 @@ export default function Login() {
     // 전달받은 accessToken 값을 쿠키값에 세팅
     document.cookie = `onlineOpenChatAuth=${result.data.token}; path=/`;
     
-    router.push("/");
+    // 애니메이션 표시
+    setShowAnimation(true);
+    
+    // 2초 후 홈화면으로 이동
+    setTimeout(() => {
+      router.push("/");
+    }, 2000);
   };
 
   return (
-    <div className="auth-container">
+    <>
+      {showAnimation && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          backgroundColor: "white",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 9999,
+          animation: "fadeIn 0.5s ease-in-out"
+        }}>
+          <h1 style={{
+            fontSize: "6rem",
+            fontWeight: "bold",
+            color: "#a78bfa",
+            animation: "scaleUp 1s ease-in-out"
+          }}>
+            Web Talk
+          </h1>
+        </div>
+      )}
+      <div className="auth-container">
+        <h1 style={{ fontSize: "5rem", fontWeight: "bold", color: "#a78bfa", marginBottom: "2rem", textAlign: "center" }}>
+          Web Talk
+        </h1>
       <div className="auth-form">
-        <h2 className="auth-title">Web Talk</h2>
-        <h3 className="auth-label" style={{ textAlign: "center" }}>웹기반 메신저</h3>
+        <h3 className="auth-label" style={{ textAlign: "center", fontSize: "1.5rem" }}>로그인</h3>
         <form onSubmit={handleSubmit}>
           <div>
             <label htmlFor="username" className="auth-label">
@@ -117,7 +151,7 @@ export default function Login() {
               className="auth-input"
             />
           </div>
-          <button type="submit" className="auth-button">
+          <button type="submit" className="auth-button" style={{background: "#a78bfa"}}>
             Login
           </button>
         </form>
@@ -126,5 +160,6 @@ export default function Login() {
         </p>
       </div>
     </div>
+    </>
   );
 }
